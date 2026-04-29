@@ -1,22 +1,23 @@
 # Analiza centralności pośrednictwa sieci elektroenergetycznej WN
 
-Analiza ważonej centralności pośrednictwa (weighted betweenness centrality)
-do identyfikacji węzłów krytycznych w regionalnej sieci przesyłowej wysokiego napięcia.
+Analiza ważonej centralności pośrednictwa (ang. *weighted betweenness centrality*)
+służąca do identyfikacji newralgicznych węzłów (tzw. *hot-spots*) w regionalnej
+sieci przesyłowej wysokiego napięcia.
 
 > 🇬🇧 [English version](README.md)
 
-**Status:** W trakcie realizacji — praca inżynierska, województwo zachodniopomorskie.
+**Status:** W trakcie realizacji — studencki projekt naukowy, województwo zachodniopomorskie.
 
 ---
 
 ## Opis projektu
 
 Narzędzie buduje graf topologiczny sieci 110/220/400 kV na podstawie
-danych OpenStreetMap (shapefiles) i wyznacza krytyczność węzłów metodą
-betweenness centrality. Wagi węzłów wyznaczane są na podstawie ankiety
-eksperckiej metodą AHP (Analytic Hierarchy Process).
+danych przestrzennych OpenStreetMap (shapefiles) i wyznacza krytyczność węzłów
+przy użyciu miary centralności pośrednictwa. Wagi węzłów określane są 
+na podstawie ankiet eksperckich z wykorzystaniem metody AHP (Analytic Hierarchy Process).
 
-### Pipeline przetwarzania
+### Etapy przetwarzania
 
 load_data → snap_to_nodes → snap_endpoints → expand_voltage_circuits
 → build_raw_graph → classify_nodes → simplify_and_merge_edges
@@ -28,16 +29,16 @@ load_data → snap_to_nodes → snap_endpoints → expand_voltage_circuits
 
 | Plik | Opis |
 |------|------|
-| `data/raw/lines.shp` | Linie energetyczne WN (OSM, EPSG:2180) |
+| `data/raw/lines.shp` | Linie elektroenergetyczne WN (OSM, EPSG:2180) |
 | `data/raw/nodes.shp` | Stacje transformatorowe i elektrownie (OSM, EPSG:2180) |
 
 ---
 
 ## Dane wyjściowe
 
-Wyniki zapisywane są do `output/wyniki_centralnosci.gpkg` w trzech warstwach:
+Wyniki zapisywane są do pliku `output/wyniki_centralnosci.gpkg` w postaci trzech warstw:
 
-- `wezly_krytyczne` — węzły krytyczne z wartościami centralności i rankingiem
+- `wezly_krytyczne` — węzły o największym znaczeniu, z wartościami centralności i rankingiem
 - `wszystkie_wezly` — wszystkie węzły grafu
 - `linie_sieci` — uproszczone krawędzie sieci
 
@@ -56,52 +57,47 @@ python src/main.py
 
 Kluczowe parametry w `src/config.py`:
 
-| Parametr | Domyślnie | Opis |
-|----------|-----------|------|
-| `SNAP_TOLERANCE` | 5.0 m | Tolerancja przyciągania linii do stacji |
-| `BC_EXACT` | True | Dokładny lub przybliżony betweenness |
-| `WEIGHTED` | True | Graf ważony (AHP) lub nieważony |
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `SNAP_TOLERANCE` | 5.0 m | Tolerancja dociągania (snapowania) linii do stacji |
+| `BC_EXACT` | True | Dokładne vs. przybliżone wyznaczanie centralności |
+| `WEIGHTED` | True | Uwzględnianie wag AHP w grafie (True) lub graf nieważony (False) |
 
 ---
-
 ## Ważenie metodą AHP
 
-Wagi krytyczności węzłów wyznaczane są na podstawie ankiety eksperckiej
-(skala Saaty'ego 1–9). Trzy kryteria: poziom napięcia, typ obiektu
-(elektrownia / stacja przesyłowa / GPZ), stopień węzła.
+Wagi krytyczności węzłów wyznaczane są na podstawie ocen ekspertów
+(9-stopniowa skala Saaty'ego). Pod uwagę brane są trzy kryteria: poziom napięcia,
+typ obiektu (elektrownia / stacja węzłowa / GPZ) oraz stopień węzła.
 
-Macierz AHP ładowana jest z zewnętrznego pliku — `weights/ahp_matrix.json` (wkrótce).
+Macierz AHP wczytywana jest z zewnętrznego pliku — weights/ahp_matrix.json (wkrótce).
 
 ---
 
 ## Struktura projektu
 
+```
 betweenness-centrality/
 ├── data/
 │   └── raw/          # Dane wejściowe (OSM shapefiles)
-├── output/           # Wyniki — nieśledzone przez Git
+├── output/           # Wyniki — ignorowane przez Git
 ├── src/              # Kod źródłowy
 │   ├── config.py     # Parametry i flagi
 │   ├── graph_builder.py
 │   ├── centrality.py
-│   ├── weights.py    # Logika AHP
+│   ├── weights.py    # Logika metody AHP
 │   ├── export.py
 │   └── main.py
 └── weights/
-└── ahp_matrix.json  # Wyniki ankiety eksperckiej
-
+    └── ahp_matrix.json  # Wyniki ankiet eksperckich
+```
 ---
-
 ## Zależności
-
 - Python 3.13
 - GeoPandas
 - NetworkX
 - Shapely
 - Pandas
-
 ---
-
 ## Autorzy
-
-Jakub Berliński, Bartosz Wróblewski — projekt naukowy, 2026 za pośrednictwem dr inż. Jakub Wabiński
+```Jakub Berliński, Bartosz Wróblewski — 2026```

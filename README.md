@@ -42,9 +42,6 @@ Results are written to `output/wyniki_centralnosci.gpkg` with three layers:
 - `linie_sieci` — simplified network edges
 
 ---
-
-## Usage
-
 ## Usage
 
 ```bash
