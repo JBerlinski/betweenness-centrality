@@ -1,0 +1,17 @@
+# Środowisko Python
+.venv/
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# PyCharm
+.idea/
+
+# Dane wyjściowe (generowane przez skrypt)
+output/
+
+# Pliki systemowe
+.DS_Store
+Thumbs.db
