@@ -9,7 +9,6 @@ sieci przesyłowej wysokiego napięcia.
 **Status:** W trakcie realizacji — studencki projekt naukowy, województwo zachodniopomorskie.
 
 ---
-
 ## Opis projektu
 
 Narzędzie buduje graf topologiczny sieci 110/220/400 kV na podstawie
@@ -17,6 +16,7 @@ danych przestrzennych OpenStreetMap (shapefiles) i wyznacza krytyczność węzł
 przy użyciu miary centralności pośrednictwa. Wagi węzłów określane są 
 na podstawie ankiet eksperckich z wykorzystaniem metody AHP (Analytic Hierarchy Process).
 
+---
 ### Etapy przetwarzania
 
 load_data → snap_to_nodes → snap_endpoints → expand_voltage_circuits
@@ -24,7 +24,6 @@ load_data → snap_to_nodes → snap_endpoints → expand_voltage_circuits
 → multiply_circuits → deduplicate_edges → compute_centrality → export
 
 ---
-
 ## Dane wejściowe
 
 | Plik | Opis |
@@ -33,7 +32,6 @@ load_data → snap_to_nodes → snap_endpoints → expand_voltage_circuits
 | `data/raw/nodes.shp` | Stacje transformatorowe i elektrownie (OSM, EPSG:2180) |
 
 ---
-
 ## Dane wyjściowe
 
 Wyniki zapisywane są do pliku `output/wyniki_centralnosci.gpkg` w postaci trzech warstw:
@@ -43,7 +41,6 @@ Wyniki zapisywane są do pliku `output/wyniki_centralnosci.gpkg` w postaci trzec
 - `linie_sieci` — uproszczone krawędzie sieci
 
 ---
-
 ## Uruchomienie
 
 ```bash
@@ -52,7 +49,6 @@ python src/main.py
 ```
 
 ---
-
 ## Konfiguracja
 
 Kluczowe parametry w `src/config.py`:
@@ -73,7 +69,6 @@ typ obiektu (elektrownia / stacja węzłowa / GPZ) oraz stopień węzła.
 Macierz AHP wczytywana jest z zewnętrznego pliku — weights/ahp_matrix.json (wkrótce).
 
 ---
-
 ## Struktura projektu
 
 ```
@@ -91,6 +86,7 @@ betweenness-centrality/
 └── weights/
     └── ahp_matrix.json  # Wyniki ankiet eksperckich
 ```
+
 ---
 ## Zależności
 - Python 3.13
@@ -98,6 +94,7 @@ betweenness-centrality/
 - NetworkX
 - Shapely
 - Pandas
+
 ---
 ## Autorzy
 ```Jakub Berliński, Bartosz Wróblewski — 2026```

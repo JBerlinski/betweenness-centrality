@@ -16,6 +16,7 @@ from OpenStreetMap shapefiles and computes node criticality using
 betweenness centrality. Node weights are derived from expert surveys
 via the Analytic Hierarchy Process (AHP).
 
+---
 ### Pipeline
 
 load_data → snap_to_nodes → snap_endpoints → expand_voltage_circuits
@@ -23,7 +24,6 @@ load_data → snap_to_nodes → snap_endpoints → expand_voltage_circuits
 → multiply_circuits → deduplicate_edges → compute_centrality → export
 
 ---
-
 ## Input Data
 
 | File | Description |
@@ -32,7 +32,6 @@ load_data → snap_to_nodes → snap_endpoints → expand_voltage_circuits
 | `data/raw/nodes.shp` | Transformer stations and power plants (OSM, EPSG:2180) |
 
 ---
-
 ## Output
 
 Results are written to `output/wyniki_centralnosci.gpkg` with three layers:
@@ -50,7 +49,6 @@ python src/main.py
 ```
 
 ---
-
 ## Configuration
 
 Key parameters in `src/config.py`:
@@ -71,7 +69,6 @@ node degree.
 AHP matrix is loaded from an external file — see `weights/ahp_matrix.json` (coming soon).
 
 ---
-
 ## Project Structure
 
 ```
@@ -96,6 +93,7 @@ betweenness-centrality/
 - NetworkX
 - Shapely
 - Pandas
+
 ---
 ## Authors
 ```Jakub Berliński, Bartosz Wróblewski — 2026```
