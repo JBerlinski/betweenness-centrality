@@ -5,7 +5,7 @@ in regional high-voltage transmission networks.
 
 > 🇵🇱 [Wersja polska](README.pl.md)
 
-**Status:** Work in progress — BSc thesis project, Zachodniopomorskie region, Poland.
+**Status:** Work in progress — Student research project, Zachodniopomorskie region, Poland.
 
 ---
 
@@ -45,6 +45,8 @@ Results are written to `output/wyniki_centralnosci.gpkg` with three layers:
 
 ## Usage
 
+## Usage
+
 ```bash
 pip install -r requirements.txt
 python src/main.py
@@ -63,7 +65,6 @@ Key parameters in `src/config.py`:
 | `WEIGHTED` | True | Use AHP weights or unweighted graph |
 
 ---
-
 ## AHP Weighting
 
 Node criticality weights are estimated via expert survey (Saaty 9-point scale).
@@ -76,6 +77,7 @@ AHP matrix is loaded from an external file — see `weights/ahp_matrix.json` (co
 
 ## Project Structure
 
+```
 betweenness-centrality/
 ├── data/
 │   └── raw/          # Input shapefiles (OSM)
@@ -88,21 +90,15 @@ betweenness-centrality/
 │   ├── export.py
 │   └── main.py
 └── weights/
-└── ahp_matrix.json  # Expert survey results
-
+    └── ahp_matrix.json  # Expert survey results
+```
 ---
-
 ## Dependencies
-
 - Python 3.13
 - GeoPandas
 - NetworkX
 - Shapely
 - Pandas
-
 ---
-
 ## Authors
-
-Jakub Berliński, Bartosz Wróblewski — BSc thesis, 2026
-Supervisor: dr inż. Jakub Wabiński
+```Jakub Berliński, Bartosz Wróblewski — 2026```
