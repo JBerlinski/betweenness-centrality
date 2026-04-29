@@ -17,7 +17,7 @@ przy użyciu miary centralności pośrednictwa. Wagi węzłów określane są
 na podstawie ankiet eksperckich z wykorzystaniem metody AHP (Analytic Hierarchy Process).
 
 ---
-### Etapy przetwarzania
+## Etapy przetwarzania
 
 load_data → snap_to_nodes → snap_endpoints → expand_voltage_circuits
 → build_raw_graph → classify_nodes → simplify_and_merge_edges

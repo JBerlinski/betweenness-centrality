@@ -17,7 +17,7 @@ betweenness centrality. Node weights are derived from expert surveys
 via the Analytic Hierarchy Process (AHP).
 
 ---
-### Pipeline
+## Pipeline
 
 load_data → snap_to_nodes → snap_endpoints → expand_voltage_circuits
 → build_raw_graph → classify_nodes → simplify_and_merge_edges
