@@ -1,4 +1,4 @@
-# Analiza centralności pośrednictwa sieci elektroenergetycznej WN
+# CritGrid - Analiza centralności pośrednictwa sieci elektroenergetycznej WN
 
 Analiza ważonej centralności pośrednictwa (ang. *weighted betweenness centrality*)
 służąca do identyfikacji newralgicznych węzłów (tzw. *hot-spots*) w regionalnej
