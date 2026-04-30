@@ -1,4 +1,4 @@
-# Betweenness Centrality Analysis of HV Transmission Networks
+# CritGrid - Betweenness Centrality Analysis of HV Transmission Networks
 
 Weighted betweenness centrality analysis for identifying systemic hot-spots
 in regional high-voltage transmission networks.
