@@ -82,7 +82,35 @@ def export_results(G: nx.MultiGraph,
 
     main_gdf = gpd.GeoDataFrame(records_main, crs=crs)
 
-    ranking_mask = main_gdf["typ_wezla"].isin(RANKING_TYPES)
+    # ── Oznaczenie stacji graniczących wyłącznie z węzłami BOUNDARY_DUMMY ────
+    # Stacja otoczona tylko węzłami granicznymi leży na obrzeżu obszaru
+    # i jej centralność jest artefaktem przycięcia danych, nie rzeczywistą
+    # wartością – wyklucz ją z rankingu.
+    def _wszyscy_sasiedzi_boundary(node) -> bool:
+        """Zwraca True jeśli każdy sąsiad węzła to BOUNDARY_DUMMY."""
+        sasiedzi = list(G.neighbors(node))
+        if not sasiedzi:
+            return False
+        return all(node_types.get(s) == "BOUNDARY_DUMMY" for s in sasiedzi)
+
+    boundary_adjacent_nodes: set = set()
+    for node, ntype in node_types.items():
+        if ntype == "STACJA" and _wszyscy_sasiedzi_boundary(node):
+            boundary_adjacent_nodes.add(node)
+
+    # Dopasuj flagę do wierszy GeoDataFrame przez node_id
+    boundary_adjacent_ids = {
+        f"{G.nodes[n]['x']:.1f}_{G.nodes[n]['y']:.1f}"
+        for n in boundary_adjacent_nodes
+        if n in G
+    }
+    main_gdf["boundary_adjacent"] = main_gdf["node_id"].isin(boundary_adjacent_ids)
+
+    # Ranking tylko dla stacji niegranicznych
+    ranking_mask = (
+        main_gdf["typ_wezla"].isin(RANKING_TYPES) &
+        ~main_gdf["boundary_adjacent"]
+    )
     main_gdf["rank_betweenness"] = None
     main_gdf["rank_closeness"]   = None
 
@@ -109,11 +137,14 @@ def export_results(G: nx.MultiGraph,
     n_gap      = (main_gdf["typ_wezla"] == "STACJA_OSM_GAP").sum()
     n_boundary = (main_gdf["typ_wezla"] == "BOUNDARY_DUMMY").sum()
 
+    n_boundary_adj = main_gdf["boundary_adjacent"].sum()
+
     print(f"\n  Wyeksportowano do: {output_path}")
     print(f"  Warstwa 'wezly_krytyczne': {len(main_gdf)} węzłów")
     print(f"    - STACJA:            {n_stacje}")
     print(f"    - STACJA_OSM_GAP:    {n_gap}")
     print(f"    - BOUNDARY_DUMMY:    {n_boundary}")
+    print(f"    - boundary_adjacent: {n_boundary_adj}  [wykluczone z rankingu]")
     print(f"  Warstwa 'wszystkie_wezly': {len(all_gdf)} węzłów")
     print(f"  Warstwa 'linie_sieci':     {len(planar)} segmentów")
 
@@ -123,8 +154,11 @@ def export_results(G: nx.MultiGraph,
     for _, row in top15.iterrows():
         name = row["nazwa"] or row["node_id"]
         rank = row["rank_betweenness"]
+        # boundary_adjacent: rank jest NULL – oznacz jako wykluczoną z rankingu
+        rank_str = f"#{int(rank):>3}" if rank is not None else "excl"
         tag  = " ⚠OSM_GAP" if row["typ_wezla"] == "STACJA_OSM_GAP" else ""
-        print(f"  #{int(rank):>3}  BC={row['betweenness']:.6f}  "
+        tag += " ⚠BOUNDARY_ADJ" if row["boundary_adjacent"] else ""
+        print(f"  {rank_str}  BC={row['betweenness']:.6f}  "
               f"CC={row['closeness']:.4f}  deg={row['stopien_grafu']}"
               f"  | {name[:40]}{tag}")
 
