@@ -12,7 +12,7 @@ OUTPUT_GPKG = "output/wyniki_centralnosci.gpkg"
 CRS_PROJECTED = "EPSG:2180"
 
 # ── Tolerancje geometryczne ───────────────────────────────────────────────────
-SNAP_TOLERANCE      = 150.0   # [m] snap linii do stacji
+SNAP_TOLERANCE      = 5.0   # [m] snap linii do stacji
 LINE_SNAP_TOLERANCE = 0.5   # [m] łatanie mikro-szczelin OSM
 COORD_PRECISION     = 1     # zaokrąglenie klucza węzła (10 cm)
 
