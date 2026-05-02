@@ -27,6 +27,9 @@ WEIGHTED = True      # True = wagi AHP, False = graf nieważony
 BOUNDARY_MARGIN_PCT  = 0.04  # 4% rozpiętości X/Y → strefa graniczna
 DEDUP_LENGTH_TOL_PCT = 0.02  # 2% tolerancja długości przy deduplikacji
 
+# ── Ścieżka konfiguracji AHP ─────────────────────────────────────────────────
+AHP_CONFIG_PATH = "data/weights/ahp_matrix.json"
+
 # ── Kolumny eksportu ──────────────────────────────────────────────────────────
 NODE_COLS_EXPORT = [
     "join_name",

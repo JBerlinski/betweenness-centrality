@@ -1,0 +1,18 @@
+{
+  "weights": {
+    "voltage": null,
+    "object_type": null,
+    "degree": null
+  },
+  "voltage_scores": {
+    "110000": 0.333,
+    "220000": 0.667,
+    "400000": 1.0
+  },
+  "type_scores": {
+    "generator": 1.0,
+    "substation": 0.66,
+    "distribution": 0.33
+  },
+  "degree_normalization": "minmax"
+}

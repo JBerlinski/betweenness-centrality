@@ -16,11 +16,13 @@ Pipeline v4:
       → deduplicate_edges
       → compute_centrality
       → export_results
+      → apply_criticality  (AHP)
 """
 
 import time
 
 import geopandas as gpd
+import pyogrio
 
 from config import (
     INPUT_LINES,
@@ -33,6 +35,7 @@ from config import (
     DEDUP_LENGTH_TOL_PCT,
     BC_EXACT,
     WEIGHTED,
+    AHP_CONFIG_PATH,
 )
 from graph_builder import (
     load_data,
@@ -47,6 +50,7 @@ from graph_builder import (
 )
 from centrality import compute_centrality
 from export import export_results
+from weights import apply_criticality, load_ahp_config
 
 
 def main():
@@ -109,6 +113,17 @@ def main():
     result = export_results(
         G_final, node_types, node_attrs, centrality,
         export_lines_gdf, CRS_PROJECTED, OUTPUT_GPKG
+    )
+
+    # 11. Wskaźnik krytyczności AHP
+    ahp_config   = load_ahp_config(AHP_CONFIG_PATH)
+    result_with_k = apply_criticality(result, G_final, ahp_config)
+    # Nadpisz warstwę wezly_krytyczne w istniejącym pliku GPKG
+    pyogrio.write_dataframe(
+        result_with_k,
+        OUTPUT_GPKG,
+        layer="wezly_krytyczne",
+        layer_kwargs={"OVERWRITE": "YES"},
     )
 
     t_total = time.time() - t_start
