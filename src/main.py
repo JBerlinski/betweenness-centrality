@@ -19,10 +19,10 @@ Pipeline v4:
       → apply_criticality  (AHP)
 """
 
+import sqlite3
 import time
 
 import geopandas as gpd
-import pyogrio
 
 from config import (
     INPUT_LINES,
@@ -116,14 +116,35 @@ def main():
     )
 
     # 11. Wskaźnik krytyczności AHP
-    ahp_config   = load_ahp_config(AHP_CONFIG_PATH)
+    ahp_config    = load_ahp_config(AHP_CONFIG_PATH)
     result_with_k = apply_criticality(result, G_final, ahp_config)
-    # Nadpisz warstwę wezly_krytyczne w istniejącym pliku GPKG
-    pyogrio.write_dataframe(
-        result_with_k,
-        OUTPUT_GPKG,
-        layer="wezly_krytyczne",
-        layer_kwargs={"OVERWRITE": "YES"},
+
+    # GPKG to baza SQLite – usuwamy warstwę przez sqlite3, bo pyogrio 0.12.x
+    # nie udostępnia bezpośredniej opcji nadpisania istniejącej warstwy.
+    with sqlite3.connect(OUTPUT_GPKG) as _conn:
+        # Usuń tabelę warstwy i tabele indeksu przestrzennego (rtree_*)
+        _tables = [r[0] for r in _conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table'"
+            " AND (name=? OR name LIKE ?)",
+            ("wezly_krytyczne", "rtree_wezly_krytyczne_%"),
+        )]
+        for _t in _tables:
+            _conn.execute(f'DROP TABLE IF EXISTS "{_t}"')
+        _conn.execute(
+            "DELETE FROM gpkg_contents WHERE table_name='wezly_krytyczne'"
+        )
+        _conn.execute(
+            "DELETE FROM gpkg_geometry_columns WHERE table_name='wezly_krytyczne'"
+        )
+        try:
+            _conn.execute(
+                "DELETE FROM gpkg_extensions WHERE table_name='wezly_krytyczne'"
+            )
+        except sqlite3.OperationalError:
+            pass  # tabela gpkg_extensions może nie istnieć w tym pliku
+
+    result_with_k.to_file(
+        OUTPUT_GPKG, layer="wezly_krytyczne", driver="GPKG", mode="a"
     )
 
     t_total = time.time() - t_start
