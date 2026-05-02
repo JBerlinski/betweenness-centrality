@@ -32,6 +32,7 @@ from config import (
     BOUNDARY_MARGIN_PCT,
     DEDUP_LENGTH_TOL_PCT,
     BC_EXACT,
+    WEIGHTED,
 )
 from graph_builder import (
     load_data,
@@ -62,6 +63,7 @@ def main():
     print(f"  BOUNDARY_MARGIN:   {BOUNDARY_MARGIN_PCT * 100:.0f}% obszaru")
     print(f"  DEDUP_LENGTH_TOL:  {DEDUP_LENGTH_TOL_PCT * 100:.0f}%")
     print(f"  BC dokładny:       {BC_EXACT}")
+    print(f"  BC ważone:         {WEIGHTED}")
 
     # 1. Wczytanie
     lines, nodes = load_data(INPUT_LINES, INPUT_NODES)
