@@ -35,7 +35,16 @@ warnings.filterwarnings("ignore")
 # ─────────────────────────────────────────────────────────────────────────────
 
 def load_data(lines_path: str, nodes_path: str) -> tuple:
-    """Wczytuje dane przestrzenne linii i węzłów, reprojekcjonuje do CRS_PROJECTED."""
+    """Wczytuje dane przestrzenne linii i węzłów, reprojekcjonuje do CRS_PROJECTED.
+
+    Args:
+        lines_path: Ścieżka do pliku Shapefile z liniami sieci.
+        nodes_path: Ścieżka do pliku Shapefile ze stacjami.
+
+    Returns:
+        Krotka ``(lines, nodes)`` – dwa GeoDataFrame'y reprojekcjonowane do
+        CRS_PROJECTED, przefiltrowane z usuniętymi pustymi geometriami.
+    """
     print("=" * 60)
     print("KROK 1: Wczytywanie danych")
     print("=" * 60)
@@ -79,7 +88,17 @@ def load_data(lines_path: str, nodes_path: str) -> tuple:
 def snap_lines_to_nodes(lines: gpd.GeoDataFrame,
                         nodes: gpd.GeoDataFrame,
                         tolerance: float) -> gpd.GeoDataFrame:
-    """Przyciąga końce linii do najbliższej stacji w obrębie podanej tolerancji."""
+    """Przyciąga końce linii do najbliższej stacji w obrębie podanej tolerancji.
+
+    Args:
+        lines: GeoDataFrame linii sieci.
+        nodes: GeoDataFrame stacji (punkty referencyjne).
+        tolerance: Maksymalna odległość snapowania w metrach.
+
+    Returns:
+        GeoDataFrame linii z zaktualizowanymi geometriami – końce w zasięgu
+        tolerancji zostają przesunięte do współrzędnych stacji.
+    """
     print("\n" + "=" * 60)
     print("KROK 2: Snap linii do stacji")
     print("=" * 60)
@@ -129,7 +148,17 @@ def snap_lines_to_nodes(lines: gpd.GeoDataFrame,
 # ─────────────────────────────────────────────────────────────────────────────
 
 def snap_endpoints_to_endpoints(lines: gpd.GeoDataFrame, tolerance: float) -> gpd.GeoDataFrame:
-    """Łata mikro-szczeliny między końcami sąsiednich linii."""
+    """Łata mikro-szczeliny między końcami sąsiednich linii.
+
+    Args:
+        lines: GeoDataFrame linii po snapowaniu do stacji.
+        tolerance: Maksymalna odległość szczeliny do załatania w metrach.
+            Dolna granica wynosi 0,001 m (filtr na identyczne punkty).
+
+    Returns:
+        GeoDataFrame linii z końcami dosunniętymi do siebie tam, gdzie
+        odległość mieściła się w przedziale (0,001 m, tolerance].
+    """
     print("\n" + "=" * 60)
     print("KROK 2B: Łatanie mikro-szczelin między liniami")
     print("=" * 60)
@@ -199,7 +228,19 @@ def snap_endpoints_to_endpoints(lines: gpd.GeoDataFrame, tolerance: float) -> gp
 # ─────────────────────────────────────────────────────────────────────────────
 
 def expand_voltage_circuits(lines: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
-    """Rozbija rekordy wielonapięciowe (voltage z ";") na atomowe rekordy jednonapięciowe."""
+    """Rozbija rekordy wielonapięciowe (voltage z ";") na atomowe rekordy jednonapięciowe.
+
+    Rekord OSM z ``voltage = "110000;220000"`` oznacza dwa fizycznie osobne
+    obwody biegnące na wspólnych słupach. Funkcja dzieli go na n rekordów
+    (po jednym na napięcie) i rozdziela liczbę kabli proporcjonalnie.
+
+    Args:
+        lines: GeoDataFrame linii sieci bezpośrednio po snapowaniu.
+
+    Returns:
+        GeoDataFrame z wyłącznie atomowymi wartościami ``voltage``
+        (bez znaku ``;``). Liczba rekordów może być większa niż wejściowa.
+    """
     print("\n" + "=" * 60)
     print("KROK 2C: Rozdzielenie wielonapięciowych linii  [v4]")
     print("=" * 60)
@@ -287,7 +328,16 @@ def expand_voltage_circuits(lines: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
 
 
 def coord_key(x: float, y: float) -> tuple:
-    """Zwraca zaokrąglony klucz współrzędnych węzła."""
+    """Zwraca zaokrąglony klucz współrzędnych węzła.
+
+    Args:
+        x: Współrzędna X (easting) w metrach.
+        y: Współrzędna Y (northing) w metrach.
+
+    Returns:
+        Krotka ``(x_round, y_round)`` zaokrąglona do COORD_PRECISION miejsc
+        po przecinku (domyślnie 1, czyli dokładność 10 cm).
+    """
     return (round(x, COORD_PRECISION), round(y, COORD_PRECISION))
 
 
@@ -299,7 +349,17 @@ def coord_key(x: float, y: float) -> tuple:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def build_raw_graph(lines: gpd.GeoDataFrame) -> nx.MultiGraph:
-    """Buduje surowy multigraf z GeoDataFrame linii – jedna krawędź na rekord OSM."""
+    """Buduje surowy multigraf z GeoDataFrame linii – jedna krawędź na rekord OSM.
+
+    Args:
+        lines: GeoDataFrame linii po atomizacji napięć (każdy rekord ma
+            pojedynczą wartość ``voltage``).
+
+    Returns:
+        Multigraf NetworkX z węzłami jako krotkami współrzędnych i krawędziami
+        zawierającymi atrybuty: ``geometry``, ``weight``, ``length_m``,
+        ``voltage_str``, ``num_circuits`` oraz kolumny z LINE_COLS_EXPORT.
+    """
     print("\n" + "=" * 60)
     print("KROK 3: Budowa surowego grafu  [v4: wyłącznie cables, bez circuits]")
     print("=" * 60)
@@ -355,7 +415,11 @@ def build_raw_graph(lines: gpd.GeoDataFrame) -> nx.MultiGraph:
 
 
 def _print_voltage_stats(G: nx.MultiGraph) -> None:
-    """Pomocnicza: wyświetla rozkład napięć krawędzi grafu (diagnostyka)."""
+    """Wyświetla rozkład napięć krawędzi grafu – funkcja diagnostyczna.
+
+    Args:
+        G: Multigraf z atrybutem ``voltage_str`` na krawędziach.
+    """
     v_counter: Counter = Counter()
     semicolon_edges = 0
     for _, _, data in G.edges(data=True):
@@ -382,7 +446,19 @@ def _print_voltage_stats(G: nx.MultiGraph) -> None:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def simplify_and_merge_edges(G: nx.MultiGraph, node_types: dict) -> nx.MultiGraph:
-    """Kontraktuje węzły techniczne (stopień 2) scalając sąsiednie krawędzie."""
+    """Kontraktuje węzły techniczne (stopień 2) scalając sąsiednie krawędzie.
+
+    Węzeł o stopniu 2 z dwoma różnymi sąsiadami zostaje usunięty, a dwie
+    przylegające krawędzie zostają zastąpione jedną scaloną.
+
+    Args:
+        G: Surowy multigraf po klasyfikacji węzłów.
+        node_types: Słownik ``{węzeł: typ}`` zwrócony przez ``classify_nodes``.
+
+    Returns:
+        Nowy multigraf z usuniętymi węzłami TECHNICAL_JUNCTION i scalonymi
+        krawędziami (geometria, długość, napięcie, num_circuits).
+    """
     print("\n" + "=" * 60)
     print("KROK 4: Kontrakcja węzłów technicznych  [v4: atomowe napięcia]")
     print("=" * 60)
@@ -467,7 +543,28 @@ def simplify_and_merge_edges(G: nx.MultiGraph, node_types: dict) -> nx.MultiGrap
 def classify_nodes(G: nx.MultiGraph,
                    nodes_gdf: gpd.GeoDataFrame,
                    tolerance: float) -> tuple:
-    """Klasyfikuje węzły grafu na: STACJA, BOUNDARY_DUMMY, STACJA_OSM_GAP, TECHNICAL_JUNCTION."""
+    """Klasyfikuje węzły grafu na typy funkcjonalne.
+
+    Priorytety klasyfikacji (od najwyższego):
+        1. ``STACJA`` – dopasowanie do nodes.shp w obrębie tolerancji.
+        2. ``BOUNDARY_DUMMY`` – stopień 1 (ślepa gałąź).
+        3. ``BOUNDARY_DUMMY`` – węzeł w strefie granicznej (BOUNDARY_MARGIN_PCT)
+           z co najwyżej 2 unikalnymi sąsiadami.
+        4. ``STACJA_OSM_GAP`` – węzeł łączący krawędzie różnych napięć
+           (implikowany transformator).
+        5. ``TECHNICAL_JUNCTION`` – węzeł techniczny (domyślny).
+
+    Args:
+        G: Surowy multigraf sieci.
+        nodes_gdf: GeoDataFrame stacji z pliku nodes.shp.
+        tolerance: Promień wyszukiwania stacji w metrach (SNAP_TOLERANCE).
+
+    Returns:
+        Krotka ``(node_types, node_attrs)``:
+            ``node_types`` (dict): typ każdego węzła ``{węzeł: str}``.
+            ``node_attrs`` (dict): atrybuty z nodes.shp lub pusty słownik
+            dla węzłów niezidentyfikowanych ``{węzeł: dict}``.
+    """
     print("\n" + "=" * 60)
     print("KROK 5: Klasyfikacja węzłów")
     print("=" * 60)
@@ -581,7 +678,17 @@ def classify_nodes(G: nx.MultiGraph,
 # ─────────────────────────────────────────────────────────────────────────────
 
 def multiply_circuits(G: nx.MultiGraph) -> nx.MultiGraph:
-    """Dodaje kopie krawędzi reprezentujące dodatkowe fizyczne obwody (cables // 3 > 1)."""
+    """Dodaje kopie krawędzi reprezentujące dodatkowe fizyczne obwody.
+
+    Dla każdej krawędzi z ``num_circuits > 1`` dodaje ``num_circuits - 1``
+    identycznych kopii, odwzorowując fizyczną wieloobwodowość linii.
+
+    Args:
+        G: Multigraf po kontrakcji węzłów technicznych.
+
+    Returns:
+        Ten sam obiekt grafu G z dołączonymi kopiami krawędzi wieloobwodowych.
+    """
     print("\n" + "=" * 60)
     print("KROK 4B: Multiplikacja fizycznych obwodów")
     print("=" * 60)
@@ -613,7 +720,23 @@ def multiply_circuits(G: nx.MultiGraph) -> nx.MultiGraph:
 def deduplicate_edges(G: nx.MultiGraph,
                       length_tol_pct: float = DEDUP_LENGTH_TOL_PCT
                       ) -> tuple:
-    """Usuwa logiczne duplikaty krawędzi przekraczające deklarowaną liczbę obwodów."""
+    """Usuwa logiczne duplikaty krawędzi przekraczające deklarowaną liczbę obwodów.
+
+    Grupuje krawędzie wg pary węzłów i napięcia. W każdej grupie zachowuje
+    tyle krawędzi ile wynosi ``max(num_circuits)``. Krawędzie o długości
+    różniącej się od referencyjnej o więcej niż ``length_tol_pct`` uznaje
+    za osobne trasy fizyczne i nie usuwa.
+
+    Args:
+        G: Multigraf po multiplikacji obwodów.
+        length_tol_pct: Dopuszczalna względna różnica długości krawędzi
+            uznawana za duplikat (domyślnie DEDUP_LENGTH_TOL_PCT = 2 %).
+
+    Returns:
+        Krotka ``(G, n_removed)``:
+            ``G``: multigraf z usuniętymi duplikatami (modyfikacja in-place).
+            ``n_removed`` (int): liczba usuniętych krawędzi.
+    """
     print("\n" + "=" * 60)
     print("KROK 4C: Deduplikacja logicznych duplikatów  [v4: bez circuit_explicit]")
     print("=" * 60)

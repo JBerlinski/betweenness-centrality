@@ -24,20 +24,23 @@ def export_results(G: nx.MultiGraph,
                    planar: gpd.GeoDataFrame,
                    crs: str,
                    output_path: str) -> gpd.GeoDataFrame:
-    """
-    Zapisuje wyniki do pliku GeoPackage i wyświetla ranking TOP 15 stacji.
+    """Zapisuje wyniki do pliku GeoPackage i wyświetla ranking TOP 15 stacji.
 
-    Parametry
-    ---------
-    G           : graf po deduplikacji,
-    node_types  : słownik {węzeł: typ_węzła},
-    node_attrs  : słownik {węzeł: atrybuty z nodes.shp},
-    centrality  : słownik zwrócony przez compute_centrality,
-    planar      : GeoDataFrame krawędzi do warstwy linie_sieci,
-    crs         : kod EPSG układu wynikowego,
-    output_path : ścieżka do pliku .gpkg.
+    Args:
+        G: Graf po deduplikacji krawędzi.
+        node_types: Słownik ``{węzeł: typ_węzła}`` zwrócony przez
+            ``classify_nodes``.
+        node_attrs: Słownik ``{węzeł: dict_atrybutów}`` z danymi z nodes.shp.
+        centrality: Słownik zwrócony przez ``compute_centrality`` z kluczami
+            ``betweenness``, ``closeness`` i ``degree_centrality``.
+        planar: GeoDataFrame krawędzi eksportowanych jako warstwa
+            ``linie_sieci``.
+        crs: Kod EPSG układu współrzędnych wynikowego (np. ``"EPSG:2180"``).
+        output_path: Ścieżka do pliku wyjściowego ``.gpkg``.
 
-    Zwraca GeoDataFrame warstwy 'wezly_krytyczne'.
+    Returns:
+        GeoDataFrame warstwy ``wezly_krytyczne`` z miarami centralności
+        i rankingiem stacji.
     """
     print("\n" + "=" * 60)
     print("KROK 7: Eksport wyników")
@@ -87,7 +90,15 @@ def export_results(G: nx.MultiGraph,
     # i jej centralność jest artefaktem przycięcia danych, nie rzeczywistą
     # wartością – wyklucz ją z rankingu.
     def _wszyscy_sasiedzi_boundary(node) -> bool:
-        """Zwraca True jeśli każdy sąsiad węzła to BOUNDARY_DUMMY."""
+        """Sprawdza, czy wszyscy sąsiedzi węzła to BOUNDARY_DUMMY.
+
+        Args:
+            node: Klucz węzła grafu G.
+
+        Returns:
+            ``True`` jeśli węzeł ma co najmniej jednego sąsiada i wszyscy
+            sąsiedzi są typu BOUNDARY_DUMMY, w przeciwnym razie ``False``.
+        """
         sasiedzi = list(G.neighbors(node))
         if not sasiedzi:
             return False

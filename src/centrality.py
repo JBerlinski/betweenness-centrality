@@ -11,7 +11,7 @@ import time
 
 import networkx as nx
 
-from config import BC_EXACT, BC_K_APPROX
+from config import BC_EXACT, BC_K_APPROX, WEIGHTED
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -21,13 +21,24 @@ from config import BC_EXACT, BC_K_APPROX
 # ─────────────────────────────────────────────────────────────────────────────
 
 def compute_centrality(G: nx.MultiGraph) -> dict:
-    """
-    Oblicza betweenness, closeness i degree centrality dla wszystkich węzłów.
+    """Oblicza betweenness, closeness i degree centrality dla wszystkich węzłów.
 
-    Zwraca słownik z kluczami:
-      'betweenness'       – BC znormalizowany,
-      'closeness'         – CC ważony odległością,
-      'degree_centrality' – stopień fizyczny węzła w MultiGraph.
+    Buduje uproszczony graf trasowania (bez równoległych krawędzi, zachowując
+    najkrótszą), po czym wyznacza miary centralności osobno dla każdego
+    komponentu spójnego. Tryb ważenia krawędzi (``weight="weight"`` lub
+    ``weight=None``) sterowany jest flagą ``WEIGHTED`` z ``config.py``.
+
+    Args:
+        G: Multigraf sieci energetycznej po deduplikacji. Krawędzie muszą
+            posiadać atrybut ``weight`` (długość odcinka w metrach).
+
+    Returns:
+        Słownik z kluczami:
+            ``betweenness`` (dict): BC znormalizowany {węzeł: float}.
+            ``closeness`` (dict): CC ważony długością gdy ``WEIGHTED=True``,
+            nieważony gdy ``WEIGHTED=False`` {węzeł: float}.
+            ``degree_centrality`` (dict): stopień fizyczny węzła
+            (liczba obwodów) w MultiGraph {węzeł: int}.
     """
     print("\n" + "=" * 60)
     print("KROK 6: Obliczanie centralności")
@@ -50,6 +61,10 @@ def compute_centrality(G: nx.MultiGraph) -> dict:
     print(f"  Komponentów: {len(components)}, główny: {len(main_comp)} węzłów "
           f"({100 * len(main_comp) / G_calc.number_of_nodes():.1f}%)")
 
+    # "weight" → BC/CC liczone po długości krawędzi; None → graf nieważony
+    weight_attr = "weight" if WEIGHTED else None
+    print(f"  Tryb ważenia:                 {'ważony (length_m)' if WEIGHTED else 'nieważony'}")
+
     bc_all, cc_all = {}, {}
     dc_all = {node: G.degree(node) for node in G.nodes()}
 
@@ -67,15 +82,15 @@ def compute_centrality(G: nx.MultiGraph) -> dict:
             if i == 0:
                 t0 = time.time()
                 print(f"  BC dokładny ({n} węzłów)... ", end="", flush=True)
-            bc_sub = nx.betweenness_centrality(subG, weight="weight", normalized=True)
+            bc_sub = nx.betweenness_centrality(subG, weight=weight_attr, normalized=True)
             if i == 0:
                 print(f"gotowe ({time.time() - t0:.1f}s)")
         else:
             k = min(n, BC_K_APPROX)
-            bc_sub = nx.betweenness_centrality(subG, k=k, weight="weight", normalized=True)
+            bc_sub = nx.betweenness_centrality(subG, k=k, weight=weight_attr, normalized=True)
 
         bc_all.update(bc_sub)
-        cc_all.update(nx.closeness_centrality(subG, distance="weight"))
+        cc_all.update(nx.closeness_centrality(subG, distance=weight_attr))
 
     print("  DC, CC: zakończone")
     return {"betweenness": bc_all, "closeness": cc_all, "degree_centrality": dc_all}
