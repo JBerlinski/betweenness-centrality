@@ -42,6 +42,12 @@ wskaźnik krytyczności `K` zapisywany w kolumnie `krytycznosc`.
 | `data/raw/lines.shp` | Linie elektroenergetyczne WN (OSM, EPSG:2180) |
 | `data/raw/nodes.shp` | Stacje transformatorowe i elektrownie (OSM, EPSG:2180) |
 
+> **Uwaga:** Dane wejściowe przed uruchomieniem pipeline'u zostały poddane
+> ręcznemu preprocessingowi. Obejmuje on konwersję poligonów stacji do
+> centroidów punktowych, scalanie stacji leżących w bliskiej odległości
+> oraz korektę geometrii linii w celu zapewnienia ciągłości topologicznej.
+> Automatyzacja tego etapu planowana jest w przyszłej wersji projektu.
+
 ---
 
 ## Dane wyjściowe
