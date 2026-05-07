@@ -40,6 +40,12 @@ the composite criticality index `K`, stored in the `krytycznosc` column.
 | `data/raw/lines.shp` | HV power lines (OSM, EPSG:2180) |
 | `data/raw/nodes.shp` | Transformer stations and power plants (OSM, EPSG:2180) |
 
+> **Note:** Input shapefiles are manually pre-processed before running the
+> pipeline. Pre-processing steps include converting station polygons to point
+> centroids, merging stations in close proximity, and correcting line
+> geometries to ensure topological continuity. Automation of this step is
+> planned for a future release.
+
 ---
 
 ## Output
