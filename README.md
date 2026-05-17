@@ -1,4 +1,4 @@
-# CritGrid — Betweenness Centrality Analysis of HV Transmission Networks
+# CritGrid — Identification of Critical Nodes in High-Voltage Power Networks Using Graph Analysis and the AHP Method
 
 Weighted betweenness centrality analysis for identifying systemic hot-spots
 in regional high-voltage transmission networks.
@@ -13,7 +13,7 @@ in regional high-voltage transmission networks.
 
 CritGrid builds a topological graph of the 110/220/400 kV power grid from
 OpenStreetMap shapefiles and computes node criticality using betweenness
-centrality. A composite criticality index `K` is derived by multiplying BC
+centrality. A composite criticality index `CI` is derived by multiplying BC
 by a weighted node score obtained via the Analytic Hierarchy Process (AHP).
 
 ---
@@ -29,7 +29,7 @@ load_data → snap_to_nodes → snap_endpoints → expand_voltage_circuits
 
 Steps 1–10 build the graph and compute raw centrality measures.
 Step 11 multiplies betweenness centrality by the AHP node score to produce
-the composite criticality index `K`, stored in the `krytycznosc` column.
+the composite criticality index `CI`, stored in the `ci` column.
 
 ---
 
@@ -54,7 +54,7 @@ Results are written to `output/wyniki_centralnosci.gpkg` with three layers:
 
 | Layer | Contents |
 |-------|----------|
-| `wezly_krytyczne` | Substations and boundary nodes with BC, CC, degree, ranking and `krytycznosc` |
+| `wezly_krytyczne` | Substations and boundary nodes with BC, CC, degree, ranking and `ci` (Critical Index) |
 | `wszystkie_wezly` | All graph nodes including technical junctions |
 | `linie_sieci` | Simplified network edges with voltage and circuit count |
 
@@ -91,7 +91,7 @@ touching pipeline code.
 Each substation receives a composite criticality index:
 
 ```
-K = BC × f(voltage, object_type, degree)
+CI = BC × f(voltage, object_type, degree)
 ```
 
 where `f()` is a weighted sum of normalised node features:
@@ -102,14 +102,15 @@ f = w₁ · norm_voltage + w₂ · norm_type + w₃ · norm_degree
 
 | Symbol | Meaning |
 |--------|---------|
+| **CI** | Critical Index — final composite score stored in column `ci` |
 | **BC** | Betweenness centrality (normalised, 0–1) |
 | **norm_voltage** | Voltage level score from `voltage_scores` mapping in JSON |
 | **norm_type** | Object type score from `type_scores` mapping in JSON |
 | **norm_degree** | Node degree, min-max normalised across the whole dataset |
 | **w₁, w₂, w₃** | AHP weights from `data/weights/ahp_matrix.json` |
 
-The `krytycznosc` column in the `wezly_krytyczne` layer holds the final score.
-When any AHP weight is `null`, the tool falls back to `K = BC` automatically
+The `ci` column in the `wezly_krytyczne` layer holds the final score.
+When any AHP weight is `null`, the tool falls back to `CI = BC` automatically
 and prints a warning — no code changes required.
 
 ---
@@ -136,7 +137,7 @@ block with the derived priorities (values must sum to 1.0):
 ```
 
 As long as any weight remains `null`, the pipeline automatically runs in
-unweighted mode (`K = BC`) and logs which weights are missing.
+unweighted mode (`CI = BC`) and logs which weights are missing.
 
 ### Default score mappings
 
@@ -177,7 +178,7 @@ betweenness-centrality/
 │   ├── config.py                   # All parameters and file paths
 │   ├── graph_builder.py            # Graph construction pipeline (steps 1–4C)
 │   ├── centrality.py               # Betweenness, closeness and degree centrality
-│   ├── weights.py                  # AHP criticality scoring (step 11)
+│   ├── weights.py                  # AHP Critical Index (CI) scoring (step 11)
 │   ├── export.py                   # GeoPackage export (step 10)
 │   └── main.py                     # Pipeline entry point
 └── requirements.txt

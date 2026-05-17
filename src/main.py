@@ -115,9 +115,9 @@ def main():
         export_lines_gdf, CRS_PROJECTED, OUTPUT_GPKG
     )
 
-    # 11. Wskaźnik krytyczności AHP
-    ahp_config    = load_ahp_config(AHP_CONFIG_PATH)
-    result_with_k = apply_criticality(result, G_final, ahp_config)
+    # 11. Critical Index (CI) – AHP
+    ahp_config     = load_ahp_config(AHP_CONFIG_PATH)
+    result_with_ci = apply_criticality(result, G_final, ahp_config)
 
     # GPKG to baza SQLite – usuwamy warstwę przez sqlite3, bo pyogrio 0.12.x
     # nie udostępnia bezpośredniej opcji nadpisania istniejącej warstwy.
@@ -143,7 +143,7 @@ def main():
         except sqlite3.OperationalError:
             pass  # tabela gpkg_extensions może nie istnieć w tym pliku
 
-    result_with_k.to_file(
+    result_with_ci.to_file(
         OUTPUT_GPKG, layer="wezly_krytyczne", driver="GPKG", mode="a"
     )
 

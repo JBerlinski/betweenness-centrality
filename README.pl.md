@@ -1,4 +1,4 @@
-# CritGrid — Analiza centralności pośrednictwa sieci elektroenergetycznej WN
+# CritGrid — Identyfikacja węzłów krytycznych sieci energetycznej wysokiego i najwyższego napięcia z wykorzystaniem analizy grafowej i metody AHP
 
 Analiza ważonej centralności pośrednictwa (ang. *weighted betweenness centrality*)
 służąca do identyfikacji newralgicznych węzłów (tzw. *hot-spots*) w regionalnej
@@ -14,9 +14,9 @@ sieci przesyłowej wysokiego napięcia.
 
 CritGrid buduje graf topologiczny sieci 110/220/400 kV na podstawie danych
 przestrzennych OpenStreetMap (shapefiles) i wyznacza krytyczność węzłów przy
-użyciu miary centralności pośrednictwa. Złożony wskaźnik krytyczności `K`
-powstaje przez pomnożenie BC przez ważony wynik węzła wyznaczony metodą AHP
-(Analytic Hierarchy Process).
+użyciu miary centralności pośrednictwa. Złożony wskaźnik krytyczności `CI`
+(Critical Index) powstaje przez pomnożenie BC przez ważony wynik węzła
+wyznaczony metodą AHP (Analytic Hierarchy Process).
 
 ---
 
@@ -31,7 +31,7 @@ load_data → snap_to_nodes → snap_endpoints → expand_voltage_circuits
 
 Kroki 1–10 budują graf i wyznaczają surowe miary centralności.
 Krok 11 mnoży betweenness centrality przez wynik węzła AHP, tworząc złożony
-wskaźnik krytyczności `K` zapisywany w kolumnie `krytycznosc`.
+wskaźnik krytyczności `CI` (Critical Index) zapisywany w kolumnie `ci`.
 
 ---
 
@@ -56,7 +56,7 @@ Wyniki zapisywane są do pliku `output/wyniki_centralnosci.gpkg` w postaci trzec
 
 | Warstwa | Zawartość |
 |---------|-----------|
-| `wezly_krytyczne` | Stacje i węzły graniczne z BC, CC, stopniem, rankingiem i kolumną `krytycznosc` |
+| `wezly_krytyczne` | Stacje i węzły graniczne z BC, CC, stopniem, rankingiem i kolumną `ci` (Critical Index) |
 | `wszystkie_wezly` | Wszystkie węzły grafu, w tym węzły techniczne |
 | `linie_sieci` | Uproszczone krawędzie sieci z napięciem i liczbą obwodów |
 
@@ -88,12 +88,12 @@ bez modyfikowania kodu pipeline'u.
 
 ---
 
-## Wskaźnik krytyczności
+## Wskaźnik krytyczności (CI)
 
 Każda stacja otrzymuje złożony wskaźnik krytyczności:
 
 ```
-K = BC × f(napięcie, typ_obiektu, stopień_węzła)
+CI = BC × f(napięcie, typ_obiektu, stopień_węzła)
 ```
 
 gdzie `f()` to ważona suma znormalizowanych cech węzła:
@@ -104,15 +104,16 @@ f = w₁ · norm_napięcie + w₂ · norm_typ + w₃ · norm_stopień
 
 | Symbol | Znaczenie |
 |--------|-----------|
+| **CI** | Critical Index — wynikowy wskaźnik krytyczności, kolumna `ci` |
 | **BC** | Betweenness centrality (znormalizowana, 0–1) |
 | **norm_napięcie** | Wynik poziomu napięcia wg tablicy `voltage_scores` w JSON |
 | **norm_typ** | Wynik typu obiektu wg tablicy `type_scores` w JSON |
 | **norm_stopień** | Stopień węzła, znormalizowany metodą min-max w zbiorze |
 | **w₁, w₂, w₃** | Wagi AHP z pliku `data/weights/ahp_matrix.json` |
 
-Kolumna `krytycznosc` w warstwie `wezly_krytyczne` zawiera ostateczny wynik.
+Kolumna `ci` w warstwie `wezly_krytyczne` zawiera ostateczny wynik.
 Gdy dowolna waga AHP jest `null`, program automatycznie przełącza się na tryb
-nieważony (`K = BC`) i wyświetla ostrzeżenie — bez konieczności zmian w kodzie.
+nieważony (`CI = BC`) i wyświetla ostrzeżenie — bez konieczności zmian w kodzie.
 
 ---
 
@@ -138,7 +139,7 @@ Po uzyskaniu wyników ankiety eksperckiej należy zastąpić wartości `null` w 
 ```
 
 Dopóki którakolwiek z wag ma wartość `null`, pipeline automatycznie przełącza
-się na tryb nieważony (`K = BC`) i wyświetla informację o brakujących wagach.
+się na tryb nieważony (`CI = BC`) i wyświetla informację o brakujących wagach.
 
 ### Domyślne tablice punktacji
 
@@ -179,7 +180,7 @@ betweenness-centrality/
 │   ├── config.py                   # Wszystkie parametry i ścieżki plików
 │   ├── graph_builder.py            # Budowa grafu (kroki 1–4C)
 │   ├── centrality.py               # Centralność pośrednictwa, bliskości i stopnia
-│   ├── weights.py                  # Obliczanie wskaźnika krytyczności AHP (krok 11)
+│   ├── weights.py                  # Obliczanie Critical Index (CI) metodą AHP (krok 11)
 │   ├── export.py                   # Eksport do GeoPackage (krok 10)
 │   └── main.py                     # Punkt wejścia pipeline'u
 └── requirements.txt

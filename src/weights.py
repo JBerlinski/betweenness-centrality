@@ -4,7 +4,7 @@ Ważenie węzłów metodą AHP (Analytic Hierarchy Process).
 Moduł dostarcza trzy funkcje:
   - load_ahp_config    – wczytuje plik konfiguracyjny JSON z wagami AHP,
   - compute_node_score – oblicza znormalizowany wynik węzła,
-  - apply_criticality  – wyznacza wskaźnik krytyczności K = BC * node_score.
+  - apply_criticality  – wyznacza Critical Index (CI) = BC * node_score.
 
 Mapowania napięć (voltage_scores) i typów obiektów (type_scores) pochodzą
 wyłącznie z pliku JSON wskazanego przez AHP_CONFIG_PATH w config.py.
@@ -55,7 +55,7 @@ def load_ahp_config(path: str) -> dict | None:
 
     if null_keys:
         config["weighted"] = False
-        print(f"  ⚠ Wagi null dla: {null_keys} – tryb nieważony (K = BC).")
+        print(f"  ⚠ Wagi null dla: {null_keys} – tryb nieważony (CI = BC).")
     else:
         config["weighted"] = True
         w = weights
@@ -63,7 +63,7 @@ def load_ahp_config(path: str) -> dict | None:
             f"  ✓ Wagi AHP załadowane: "
             f"voltage={w['voltage']}, "
             f"object_type={w['object_type']}, "
-            f"degree={w['degree']}  – tryb ważony (K = BC × node_score)."
+            f"degree={w['degree']}  – tryb ważony (CI = BC × node_score)."
         )
 
     return config
@@ -122,7 +122,7 @@ def compute_node_score(
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# WSKAŹNIK KRYTYCZNOŚCI
+# CRITICAL INDEX (CI)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def apply_criticality(
@@ -130,11 +130,11 @@ def apply_criticality(
     G: nx.MultiGraph,
     ahp_config: dict | None,
 ) -> gpd.GeoDataFrame:
-    """Oblicza wskaźnik krytyczności K i dodaje kolumnę ``krytycznosc`` do GDF.
+    """Oblicza Critical Index (CI) i dodaje kolumnę ``ci`` do GDF.
 
     Gdy ważenie jest wyłączone (``weighted=False`` lub ``ahp_config is None``),
-    krytyczność jest równa betweenness centrality. Gdy włączone:
-    ``K = betweenness * node_score``, gdzie ``node_score`` to wynik AHP
+    CI jest równe betweenness centrality. Gdy włączone:
+    ``CI = betweenness * node_score``, gdzie ``node_score`` to wynik AHP
     węzła wyznaczony przez ``compute_node_score``.
 
     Normalizacja min-max stopnia węzła liczona jest po całym zbiorze wierszy
@@ -148,14 +148,14 @@ def apply_criticality(
         ahp_config: Słownik konfiguracji AHP lub ``None``.
 
     Returns:
-        Kopia GeoDataFrame z dodaną kolumną ``krytycznosc``.
+        Kopia GeoDataFrame z dodaną kolumną ``ci``.
     """
     gdf     = gdf.copy()
     weighted = ahp_config is not None and ahp_config.get("weighted", False)
 
     if not weighted:
-        gdf["krytycznosc"] = gdf["betweenness"]
-        print("  Wskaźnik krytyczności: K = BC (brak ważenia AHP).")
+        gdf["ci"] = gdf["betweenness"]
+        print("  Critical Index (CI): CI = BC (brak ważenia AHP).")
         return gdf
 
     # Normalizacja min-max stopnia węzła po całym zbiorze
@@ -176,13 +176,13 @@ def apply_criticality(
         }
         scores.append(compute_node_score(node_attrs, ahp_config, norm_degree))
 
-    gdf["krytycznosc"] = [
+    gdf["ci"] = [
         float(bc) * s for bc, s in zip(gdf["betweenness"].tolist(), scores)
     ]
 
-    k_max = gdf["krytycznosc"].max()
+    ci_max = gdf["ci"].max()
     print(
-        f"  Wskaźnik krytyczności: K = BC × node_score  "
-        f"(max K = {k_max:.6f})."
+        f"  Critical Index (CI): CI = BC × node_score  "
+        f"(max CI = {ci_max:.6f})."
     )
     return gdf
